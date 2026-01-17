@@ -1,0 +1,30 @@
+---
+description: Core project context and where to find information about molstar
+alwaysApply: true
+---
+# molstar-docs
+
+This is a project to (1) understand how molstar works, and (2) write documentation for it.
+
+molstar is a javascript library for adding 3D models of proteins etc to web pages.
+It has little to no documentation and is hard to use for this reason.
+There is an online tool demonstrating it at molstar.org.
+
+The repos/ folder contains source code for four repos added as submodules:
+1. repos/molstar contains molstar/molstar, source code for the library.
+2. repos/viewer-docs contains molstar/viewer-docs, documentation for the online demo, but which may be informative about concepts.
+3. repos/molstar-rcsb contains molstar/rcsb-molstar, the implementation of molstar on RCSB's website.
+4. repos/molstar-pdbe contains molstar/pdbe-molstar, the implementation of molstar on PDBe's website.
+
+When asked a question about how something works, here are places that would be good to look in:
+1. repos/molstar/docs contains scattered, minimal documentation on concepts, though it is very incomplete.
+2. repos/viewer-docs/docs contains documentation for how to use the online demo, with occasional references to concepts used in molstar.
+3. issues/ contains all issues on the molstar/molstar repo, and the comments. People use these to ask specific questions about how to do something, and collectively they contain huge amounts of information about how to actually use molstar.
+4. discussions/ contains all discussions on the molstar/molstar repo, also could be very useful.
+5. repos/molstar/examples contains examples of how to use molstar, though they may be out of date sometimes.
+6. repos/molstar-rcsb contains an example of how to use molstar.
+7. repos/molstar-pdbe contains an example of how to use molstar.
+8. repos/molstar/src contains molstar source code, which should ultimately contain all the information that is needed, though it is vast.
+
+Be intelligent about which resources you draw upon when answering questions.
+
