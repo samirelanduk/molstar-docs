@@ -1,0 +1,9 @@
+[submodule "repos/molstar"]
+	path = repos/molstar
+	url = https://github.com/molstar/molstar.git
+[submodule "repos/molstar-rcsb"]
+	path = repos/molstar-rcsb
+	url = https://github.com/molstar/rcsb-molstar.git
+[submodule "repos/molstar-pdbe"]
+	path = repos/molstar-pdbe
+	url = https://github.com/molstar/pdbe-molstar.git
