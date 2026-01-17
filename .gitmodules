@@ -7,3 +7,6 @@
 [submodule "repos/molstar-pdbe"]
 	path = repos/molstar-pdbe
 	url = https://github.com/molstar/pdbe-molstar.git
+[submodule "repos/viewer-docs"]
+	path = repos/viewer-docs
+	url = https://github.com/molstar/viewer-docs.git
