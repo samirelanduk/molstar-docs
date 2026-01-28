@@ -194,13 +194,81 @@ To make the cube look *really* realistic, we would have to calculate the colour 
 
 Even for a cube then, rendering requires: transforming 3D coordinates to 2D, accounting for the vantage point, calculating lighting, and determining which faces are visible. And unfortunately, you rarely only need to render cubes.
 
-## Representing Complex 3D Objects in 2d
+## Representing Complex 3D Objects in 2D
 
-## Interactive 3D Scenes
+The workflow above can be used for any simple 3D geometric object. A pyramid for example, would be rendered in the same way, only with triangles for faces instead of squares.
+
+What about a sphere? How many 'faces' does a sphere have? Depending on your viewpoint, the answer is either 'an infinite number' or 'the question doesn't make sense'. Either way, the task becomes more complex.
+
+We have to *approximate* a sphere. For example, we could use an object with eight, triangular faces like so:
+
+*Image of diamond looking thing*
+
+Not very sphere-like. But what if we use more faces?
+
+*Image of soccer ball looking thing*
+
+Definitely more sphere-like, but not strictly speaking a sphere. We can never 'get to' a sphere by increasing the number of faces, but we can get an approximation that the human eye can't distinguish from a sphere if we use enough.
+
+*Image of a sphere*
+
+The worflow is still the same. We represent the sphere with a list of faces, each defined by its vertices. For each face we work out what that face will look like in 2D from a particular vantage point, and what colour it will be for a given light source. We then draw each of the polygons, and trust that our calculation of light and shade is enough to let the human brain handle intepreting it as a sphere.
+
+(Note: in practice, there is another way of representing spheres in 2D using a method called impostors. We will return to this in a later section, but it does not contradict anything we are covering here.)
+
+In fact, *any* three dimensional object can be represented this way, not just geometric shapes. A person, a building, a molecule - you start with its 'real' 3D description, and then convert it into a **mesh** of polygons (potentially thousands or even millions) which approximate the curves and edges of that object. Each polygon is then converted to 2D coordinates using math, and each polygon face is then coloured to provide shade and a sense of depth. Do this for multiple objects, and you have an entire three dimensional scene.
+
+No matter how complex, it's all just polygons as far as the computer is concerned.
 
 ## The Limitations of 2D Context
 
+Let's get back to the canvas. We've seen how you represent 3D scenes in 2D in theory, but can a canvas's `2d` context do it in practice?
+
+There is no reason why it couldn't. We can implement the workflow described above for any object to get a list of 2d polygons, with colours for each, and then draw them with `drawTo` and `fill` commands.
+
+However, it is not easy, and I am not talking about the human difficulty of writing the code - I'm talking about how easy it is for the computer to execute. There are two main problems:
+
+1. The calculations which convert 3d vertices to 2d coordinates have to be done for *every* polygon, and for *every* corner of every polygon. We didn't really go into details but these are somewhat complex linear algebra calculations that need to be done one by one, on the CPU, potentially millions of times.
+2. Calculating the colour of each polygon face is time consuming if you have to do it once, but remember what we really want is for the colour to change *within* a face to fully capture shade and lighting. This means calculating the colour of *every pixel* one by one, for every polygon. And this is before we get into the fact that the 2d context methods only let you fill entire shapes with a single colour - so we would have to do separate draw commands for every pixel.
+
+You can represent any 3D scene using canvas's `2d` context, no matter how complex. You really, truly can. But it will take a long, long time. And that's just when you draw it once.
+
+## Interactive 3D Scenes
+
+So far, we have been tackling the question of how you draw a 3D scene once, and all of the calculations that go into this. As we have seen, this is difficult to do with the canvas tools we've been using so far.
+
+But if you've ever used a 3D animation online, or played a video game, one thing may have struck you - how do you *interact* with the canvas. Once you've drawn your cube, or your sphere, or your video game character, what happens if you click the canvas and drag? Or mousewheel to zoom?
+
+Well, by default, nothing. Remember we're just painting pixels, the canvas has no concept of a 'cube' object or anything else. If we want to make the canvas interactive, we have to (1) write event handlers which capture mouse actions, (2) use these mouse events to calculate how the vantage point should move, and then (3) *wipe the canvas clear and redraw everything from the new vantage point*. If we want smooth animations, we need to do this up to 60 times a second.
+
+The canvas as we have been using it just can't do this. It cannot perform all the geometric, positional and shading calculations for every single polygons in 1/60 of a second. This is just not what Javascript is built to handle, and it is frankly not even what CPUs are built to handle.
+
+We can do it, but we need a different canvas context that `2d`.
+
 ## WebGL
 
+WebGL is an alternative context to canvases than `2d`. It uses different methods, and has different functionalities.
+
+However, and this is crucial to stress: **webGL is still fundamentally a 2D context**. There is no `drawSphere` method in webGL, you still just draw 2D polygons. In fact in some ways it is less capable than the `2d` context because while `2d` can draw all kinds of shapes, webgl can only do three things - drawing points at specific locations, linking two locations with a line, or drawing a triangle between three points.
+
+However, it has some features which entirely solve the problems we encountered earlier:
+
+1. It lets you move the complex calculations of working out the 2D coordinates of 3D coordinates to the GPU, not the CPU. The GPU lets you do these calculations in parallel, and architecturally is designed for doing precisely the kinds of linear algebra calculations that are involved in this.
+2. It also lets you do the pixel colour calculations on the GPU, in parallel - and crucially it supports interopolation from the colours at the triangle corners.
+
+Everything else is the same, in terms of the workflow. You still have to convert your 3D object to a mesh of polygons, you still have to convert all the 3D coordinates to 2D after factoring in the vantage point, you still have to manually calculate colours based on lighting - webGL doesn't do any of this for you. What it does it provide a way for you to do these calculation and draw the polygons in a vastly more efficient way.
+
+*How* you do this is beyond the scope here. You use a mixture of Javascript and a compiled language called GSLS, and there are many excellent tutorials for how to write webGL code. The purpise here is to understand they why, not the how.
+
 ## Abstractions Over WebGL
+
+Finally, I say webGL doesn't do any of these manual calculations for you, and we still need to implement the workflow outlined above, but I only mean that the browser webGL API itself doesn't provide a way to do it for you. That doesn't mean that in practice, developers working on 3D scenes are writing code to do the mathematics of polygon rotation in all their projects.
+
+There are many libaries which act as a layer of abstraction over webGL, and which do provide helper methods that are the equivalent of `drawSphere`:
+
+- three.js is the most popular and widely used library. It handles all the low-level webgl code for you, and lets you work with actual 3d objects directlt.
+- babylon.js is a similar library developed by Microsoft, commonly used in creating video games.
+- A-Frame is a layer of abstraction above three.js, with a declaritive syntax.
+
+Molstar uses webGL, but it doesn't use any of these libraries. It implements its own layer of abstraction over webGL (albeit one heavily inspired by, and in some places copied with attribution from, three.js). This custom implementation allows molstar to optimize specifically for molecular visualization.
 
