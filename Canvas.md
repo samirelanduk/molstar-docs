@@ -90,6 +90,110 @@ As you can imagine, you can draw most any two-dimensional scene you can imagine 
 
 ## Representing Simple 3D Objects in 2D
 
+We see 3D objects represented in two dimensions all the time - any time you watch television or an online video we see three dimensional scenes flattened into two dimensions in a way that looks correct enough to our brains that it interprets it as 2D, not 3D. To understand how we do this, let's begin with the simplest 3D object to handle - a cube.
+
+Let's define our cube in code:
+
+```javascript
+const cube = {
+  faces: [
+    [[2, 3, 7], [5, 3, 7], [5, 6, 7], [2, 6, 7]],
+  	[[2, 3, 4], [5, 3, 4], [5, 6, 4], [2, 6, 4]],
+  	[[2, 3, 4], [2, 6, 4], [2, 6, 7], [2, 3, 7]],
+  	[[5, 3, 4], [5, 6, 4], [5, 6, 7], [5, 3, 7]],
+  	[[2, 6, 4], [5, 6, 4], [5, 6, 7], [2, 6, 7]],
+  	[[2, 3, 4], [5, 3, 4], [5, 3, 7], [2, 3, 7]],
+  ],
+  color: "red"
+};
+```
+
+We define the cube by giving the xyz coordinates for each of the four corners of each of its six faces, and the colour of the faces (in this case every face has the same colour). How we represent it doesn't matter - we could just have easily defined it by giving the coordinates of its center, its radius, and its orientation. The point is, we have all the information we need to know what space it occupies in three dimensions.
+
+How do we draw this when all we can do is draw 2D shapes? We draw each of its six faces as 2D four-sided polygons. For each face in the cube, we convert the 3d coordinates of its four corners, into the 2d canvas coordinates they will have on screen. The mathematics of how this is done aren't important here, but if you even begin to think of how it *might* be done, you will immediately spot a problem you don't have in 2D - the 2D coordinates depend on where you are looking from. If you are looking directly 'over' the cube it will have a different representation than if you are looking directly at a corner. *For 3D objects, the 2D representation is a function of the object's geometry, **and** the coordinates of the vantage point*.
+
+Let's represent this with some pseudocode:
+
+```javascript
+const convert3dFaceTo2dPolygon(face, vantagePoint) {
+  // Mathematics goes here
+  // Input is four x,y,z values
+  // Output is four x,y values
+  return [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+}
+
+const drawPolygonToCanvas(ctx, cornerCoordinates2D) {
+  ctx.beginPath();
+  ctx.moveTo(cornerCoordinates2D[0][0], cornerCoordinates2D[0][1]);
+  for (let i = 1; i < cornerCoordinates2D.length; i++) {
+    ctx.lineTo(cornerCoordinates2D[i][0], cornerCoordinates2D[i][1]);
+  }
+  ctx.closePath();
+  ctx.stroke();
+}
+
+const drawCubeToCanvas(cube, vantagePoint, ctx) {
+  for (const face of cube.faces) {
+    const cornerCoordinates2D = convert3dFaceTo2dPolygon(face, vantagePoint)
+    drawPolygonToCanvas(ctx, cornerCoordinates2D) 
+  }
+}
+```
+
+This would produce something like this:
+
+*Image of cube wireframe goes here*
+
+It is actually six four sided 2D polygons whose edges line up, but your brain probably sees it as the wireframe of a cube. It's a wireframe because we didn't fill in any of the polygons. Our cube is defined so that each face is red, but if our `drawPolygonToCanvas` were updated to just take `cube.color` as an input, and make the interior of each polygon red, we would get this:
+
+*Image of red cube, with every face #ff0000, looking more like a six-sided 2D polygon than a sphere*
+
+Suddenly it doesn't look very much like a cube - more like a sort of skewed hexagon. The problem is, just because an cube's face is a particular colour, that doesn't mean that in real life we would see each face as the same colour, because in real life we also have to factor in *light*. 3D objects' faces have different levels of shadown which darken them, depending on where the light is coming from and how it strikes that face. We need to update our basic example:
+
+```javascript
+const convert3dFaceTo2dPolygon(face, vantagePoint) {
+  // Mathematics goes here
+  // Input is four x,y,z values
+  // Output is four x,y values
+  return [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+}
+
+const drawPolygonToCanvas(ctx, cornerCoordinates2D, faceColor) {
+  ctx.beginPath();
+  ctx.moveTo(cornerCoordinates2D[0][0], cornerCoordinates2D[0][1]);
+  for (let i = 1; i < cornerCoordinates2D.length; i++) {
+    ctx.lineTo(cornerCoordinates2D[i][0], cornerCoordinates2D[i][1]);
+  }
+  ctx.closePath();
+  ctx.stroke();
+  ctx.fillStyle = faceColor;
+  ctx.fill();
+}
+
+const getFaceColor(face, baseColor, lightDirection) {
+  // More mathematics goes here - angle calculations etc.
+  // Returns a colour string
+}
+
+const drawCubeToCanvas(cube, vantagePoint, lightDirection, ctx) {
+  for (const face of cube.faces) {
+    const cornerCoordinates2D = convert3dFaceTo2dPolygon(face, vantagePoint)
+    const faceColor = getFaceColor(face, cube.color, lightDirection)
+    drawPolygonToCanvas(ctx, cornerCoordinates2D, faceColor) 
+  }
+}
+```
+
+*Image of more realistic looking cube, albeit with each face one block colour*
+
+This looks like a cube again. There are a few details omitted here - for example now it matters which order we draw the faces in. We only see three of the faces at any given time, so it's important we either only draw those faces, or draw them last so they paint over the ones we can't see. This requires some more calculations. We also need to know or calculate which 'side' of the face is on the exterior of the cube, which again requires more math.
+
+To make the cube look *really* realistic, we would have to calculate the colour not per face (which currently makes each face the same colour) but per *pixel* within each face, which would let the faces have a gradient shadow:
+
+*Example image of the above*
+
+Even for a cube then, rendering requires: transforming 3D coordinates to 2D, accounting for the vantage point, calculating lighting, and determining which faces are visible. And unfortunately, you rarely only need to render cubes.
+
 ## Representing Complex 3D Objects in 2d
 
 ## Interactive 3D Scenes
