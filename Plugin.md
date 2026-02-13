@@ -37,8 +37,67 @@ const customisedSpec = {
 };
 ```
 
-
-
 ## Creating a Plugin
 
+You create a plugin by just creating a `PluginContext` instance, with the spec object:
+
+```javascript
+import { PluginContext } from "molstar/lib/mol-plugin/context";
+
+const basicSpec = {behaviors: []};
+const plugin = PluginContext(basicSpec);
+```
+
+At this point, the plugin is just a Javascript object with lots of attributes, and with the spec added to the `plugin.spec` attribute. But
+
 ## Initialising a Plugin
+
+State:
+
+- this.subs - all the subscriptions the plugin maintains
+- this.ev - the subject creation factory
+- this.events
+  - this.log - a `Subject` that can have things pushed to it and be subscribed to
+  - this.task
+  - this.canvas3d
+- this.log
+  - entries - a list of `LogEntry` objects
+  - various methods which send values to this.events.log
+- this.behaviors - various `BehaviorState` objects that other things can subscribe to
+- this.dataFormats - a `DataFormatsRegistry` object that stores data formats.
+
+
+
+
+
+On init call:
+
+1. Logging setup
+   1. 'Whenever this.events.log has a log entry pushed to it, add it to this.log.entries too'
+
+2. initCustomFormats
+3. initBehaviorEvents
+4. initBuiltInBehavior
+5. Set this.managers.interactivity
+6. Set this.managers.lociLabels
+7. Set this.builders.structure
+8. initAnimations
+9. initDataActions
+10. initBehaviors
+11. Issue log messages
+12. Set _isInitialized to true
+13. this.initializedPromiseCallbacks[0]
+
+
+
+
+
+
+
+
+
+Plugin attributes:
+
+`subs` - a list of rxjs `Subscriber` objects
+
+`events`
